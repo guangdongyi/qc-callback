@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巨量千川授权回调</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f6f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    padding: 32px;
+    max-width: 720px;
+    width: 100%;
+  }
+  h1 { font-size: 20px; color: #1f2329; margin-bottom: 8px; }
+  .status-ok { color: #0a7d33; }
+  .status-err { color: #d4380d; }
+  .tip { font-size: 14px; color: #646a73; margin-bottom: 24px; line-height: 1.6; }
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2329;
+    margin-bottom: 6px;
+  }
+  .code-row { display: flex; gap: 8px; }
+  .code-box {
+    flex: 1;
+    background: #f5f6f8;
+    border: 1px solid #dee0e3;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 14px;
+    word-break: break-all;
+    color: #1f2329;
+  }
+  .copy-btn {
+    flex-shrink: 0;
+    background: #1456f0;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 16px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { background: #0e45c9; }
+  .full-url {
+    background: #f5f6f8;
+    border: 1px solid #dee0e3;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 12px;
+    word-break: break-all;
+    color: #646a73;
+  }
+  .next {
+    margin-top: 24px;
+    padding: 16px;
+    background: #fff7e6;
+    border: 1px solid #ffd591;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #874d00;
+    line-height: 1.8;
+  }
+  .next code {
+    background: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="title">授权回调</h1>
+  <p class="tip" id="tip">正在解析授权信息…</p>
+
+  <div class="field">
+    <label>auth_code（授权码，10 分钟内有效，请立即复制去换 access_token）</label>
+    <div class="code-row">
+      <div class="code-box" id="authCode">—</div>
+      <button class="copy-btn" onclick="copyText('authCode')">复制</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>state（如有）</label>
+    <div class="code-row">
+      <div class="code-box" id="state">—</div>
+      <button class="copy-btn" onclick="copyText('state')">复制</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>完整回调 URL</label>
+    <div class="full-url" id="fullUrl">—</div>
+  </div>
+
+  <div class="next" id="nextStep" style="display:none;">
+    <b>下一步：换取 access_token</b><br>
+    向 <code>POST https://open.oceanengine.com/open_api/oauth2/access_token/</code> 发起请求，body 携带
+    <code>app_id</code>、<code>secret</code>、<code>grant_type=auth_code</code>、<code>auth_code</code>（上方复制的值）。
+    注意 auth_code 有效期很短，请尽快完成换取。
+  </div>
+</div>
+
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var authCode = params.get('auth_code');
+  var state = params.get('state');
+
+  document.getElementById('fullUrl').textContent = window.location.href;
+  document.getElementById('authCode').textContent = authCode || '（未获取到 auth_code 参数）';
+  document.getElementById('state').textContent = state || '（无）';
+
+  var title = document.getElementById('title');
+  var tip = document.getElementById('tip');
+  if (authCode) {
+    title.textContent = '授权成功 ✓';
+    title.className = 'status-ok';
+    tip.textContent = '巨量引擎已返回授权码，请复制 auth_code 并完成后续换 token 操作。';
+    document.getElementById('nextStep').style.display = 'block';
+  } else {
+    title.textContent = '未检测到授权码';
+    title.className = 'status-err';
+    tip.textContent = '当前 URL 中没有 auth_code 参数。如果这是直接打开本页面属于正常现象；请通过巨量引擎授权链接跳转过来。';
+  }
+
+  function copyText(id) {
+    var text = document.getElementById(id).textContent;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { alert('已复制'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('已复制');
+    }
+  }
+</script>
+</body>
+</html>
